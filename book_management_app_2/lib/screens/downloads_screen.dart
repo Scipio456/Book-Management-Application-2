@@ -36,7 +36,10 @@ class DownloadsScreen extends StatelessWidget {
                   return Dismissible(
                     key: Key(download.id),
                     direction: DismissDirection.endToStart,
-                    background: Container(color: Colors.red, child: const Align(alignment: Alignment.centerRight, child: Icon(Icons.delete, color: Colors.white))),
+                    background: Container(
+                        color: Colors.red,
+                        child: const Align(
+                            alignment: Alignment.centerRight, child: Icon(Icons.delete, color: Colors.white))),
                     onDismissed: (direction) async {
                       await FirestoreService().removeDownload(download.id);
                       final file = File(localPath);

@@ -52,14 +52,18 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
   }
 
   void _download() async {
-    final url = await StorageService().getDownloadUrl(widget.book.pdfUrl);
-    final bytes = await StorageService().downloadFile(url);
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/${widget.book.title}.pdf');
-    await file.writeAsBytes(bytes);
-    _localPath = file.path;
-    await FirestoreService().addDownload(widget.book.id, _localPath!);
-    setState(() => _isDownloaded = true);
+    try {
+      final url = await StorageService().getDownloadUrl(widget.book.pdfUrl);
+      final bytes = await StorageService().downloadFile(url);
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/${widget.book.title}.pdf');
+      await file.writeAsBytes(bytes);
+      _localPath = file.path;
+      await FirestoreService().addDownload(widget.book.id, _localPath!);
+      setState(() => _isDownloaded = true);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+    }
   }
 
   void _read() {
@@ -81,7 +85,8 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
           children: [
             Text('Author: ${widget.book.author}'),
             Text('Description: ${widget.book.description}'),
-            ElevatedButton(onPressed: _download, child: Text(_isDownloaded ? 'Downloaded' : 'Download')),
+            ElevatedButton(
+                onPressed: _isDownloaded ? null : _download, child: Text(_isDownloaded ? 'Downloaded' : 'Download')),
             ElevatedButton(onPressed: _read, child: const Text('Read')),
             IconButton(
               icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border),
