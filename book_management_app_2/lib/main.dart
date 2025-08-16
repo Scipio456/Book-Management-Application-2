@@ -6,7 +6,6 @@ import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 
 // Import the firebase_options file to access DefaultFirebaseOptions
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
