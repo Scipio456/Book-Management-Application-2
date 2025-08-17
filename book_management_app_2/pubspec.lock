@@ -101,10 +101,10 @@ packages:
     dependency: transitive
     description:
       name: device_info_plus
-      sha256: a7fd703482b391a87d60b6061d04dfdeab07826b96f9abd8f5ed98068acc0074
+      sha256: "98f28b42168cc509abc92f88518882fd58061ea372d7999aecc424345c7bff6a"
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.2"
+    version: "11.5.0"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -481,66 +481,74 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "325f519ce4ad8edd81811c21b853d72018529e353584490824da0555156ba076"
+      sha256: ce02ce65f51db8e29edc9d2225872d927e001bd2b13c2490d176563bbb046fc7
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_flutter_pdf:
     dependency: transitive
     description:
       name: syncfusion_flutter_pdf
-      sha256: da7fb9d156fafdce7099dc711c1a2dc522c48361188bd4be78520b22c99bbafd
+      sha256: "7954811deb057e15287bd59e3d906fbe75017bfd8a5543cc2b203e9aa0af4870"
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_flutter_pdfviewer:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_pdfviewer
-      sha256: "0d51a728a2982bdad43bb6bf39da25ca9322e4b196f5335b2aed58ff85c7a7bf"
+      sha256: f63d5da196816ec7ce6459adace6254e6a8a3cd23cc3807b7c8751a8b0cacf7c
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_flutter_signaturepad:
     dependency: transitive
     description:
       name: syncfusion_flutter_signaturepad
-      sha256: "84990394d4af761701b11d2764de52559a1ebbd2fcc0745a3ed34b563ac5b054"
+      sha256: "34db1589b021e554465178771a3ee4859a1378078da75d6ade6f252d88059b52"
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
+  syncfusion_pdfviewer_linux:
+    dependency: transitive
+    description:
+      name: syncfusion_pdfviewer_linux
+      sha256: a50958bc9265570f04bc20b56b32783966a969caf505b047cd2fa45e8cf337d9
+      url: "https://pub.dev"
+    source: hosted
+    version: "30.2.5"
   syncfusion_pdfviewer_macos:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_macos
-      sha256: "25ae3ce2c2ef5b6ec7eb305fdfaff6049dc7d77d667e372fcdd497cf0d872f70"
+      sha256: "63b3f046004668ad612d2d2bdb6b7e962a3ecf520108e027ea8788ecec3b122c"
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_pdfviewer_platform_interface:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_platform_interface
-      sha256: "680f2f1fc9499214bd368209028e27b4c3060e2c9333baf692ee8e8b41a8fda9"
+      sha256: e19b38d38ba9888c8ab2f06797e8cc9a45b7a06d1d0c213e94fd0cd1a8e10e4b
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_pdfviewer_web:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_web
-      sha256: a2b840167434a023335f1ef8240a5f206003e3b2c33888e772150a9bc5e9662d
+      sha256: a3d7b81f17ba5ef7e56ab3cc73dfc7ba3fc0c7068acf2dec08f783af7b745ff4
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   syncfusion_pdfviewer_windows:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_windows
-      sha256: "14b7ce1a86f893888e80cabf8ae4b5f62fd8aeb406868ec3c2101a2d211f10f6"
+      sha256: "9e84cf9ed5162e5ed33103dd4a924a5b912d711fda7deb21186692f07a46d628"
       url: "https://pub.dev"
     source: hosted
-    version: "27.2.5"
+    version: "30.2.5"
   term_glyph:
     dependency: transitive
     description:
@@ -673,10 +681,10 @@ packages:
     dependency: transitive
     description:
       name: win32_registry
-      sha256: "21ec76dfc731550fd3e2ce7a33a9ea90b828fdf19a5c3bcf556fa992cfa99852"
+      sha256: "6f1b564492d0147b330dd794fee8f512cec4977957f310f9951b5f9d83618dae"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.5"
+    version: "2.1.0"
   xdg_directories:
     dependency: transitive
     description:

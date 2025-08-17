@@ -23,21 +23,20 @@ class BookDetailsScreen extends StatelessWidget {
       try {
         final ref = FirebaseStorage.instance.ref(book.pdfUrl);
         final url = await ref.getDownloadURL();
-        String? filePath;
+        String filePath = url; // Default to URL for web
         if (kIsWeb) {
           // For web, trigger browser download
           web.HTMLAnchorElement()
             ..href = url
             ..setAttribute('download', '${book.title}.pdf')
             ..click();
-          filePath = url; // Use URL for web PDF viewing
         } else {
           // For mobile, save to device
           final response = await http.get(Uri.parse(url));
           final dir = await getApplicationDocumentsDirectory();
           final file = File('${dir.path}/${book.title}.pdf');
           await file.writeAsBytes(response.bodyBytes);
-          filePath = file.path; // Use file path for mobile PDF viewing
+          filePath = file.path; // Use file path for mobile
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Downloaded to $filePath')),
