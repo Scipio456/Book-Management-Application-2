@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
@@ -13,33 +12,46 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
   final AuthService _authService = AuthService();
 
-  void _login() async {
+  Future<void> _login(BuildContext context) async {
     try {
       await _authService.signIn(_emailController.text, _passwordController.text);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
     }
   }
 
-  void _register() async {
+  Future<void> _register(BuildContext context) async {
     try {
-      await _authService.register(_emailController.text, _passwordController.text);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      await _authService.register(
+        _emailController.text,
+        _passwordController.text,
+        _usernameController.text,
       );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed: $e')),
+        );
+      }
     }
   }
 
@@ -52,6 +64,10 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'Username'),
+            ),
+            TextField(
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'Email'),
             ),
@@ -60,11 +76,25 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            ElevatedButton(onPressed: _login, child: const Text('Login')),
-            ElevatedButton(onPressed: _register, child: const Text('Register')),
+            ElevatedButton(
+              onPressed: () => _login(context),
+              child: const Text('Login'),
+            ),
+            ElevatedButton(
+              onPressed: () => _register(context),
+              child: const Text('Register'),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

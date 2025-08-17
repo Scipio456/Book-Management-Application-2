@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/book.dart';
-import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'book_details_screen.dart';
 import 'favorites_screen.dart';
@@ -14,35 +14,77 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final FirestoreService firestoreService = FirestoreService();
+    final user = FirebaseAuth.instance.currentUser;
+
+    Future<void> logout(BuildContext context) async {
+      await FirebaseAuth.instance.signOut();
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Library'),
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user?.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!.exists) {
+              return Text('Library - ${snapshot.data!['username']}');
+            }
+            return const Text('Library');
+          },
+        ),
         actions: [
           IconButton(
-              icon: const Icon(Icons.favorite),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()))),
+            icon: const Icon(Icons.favorite),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FavoritesScreen()),
+              );
+            },
+          ),
           IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen()))),
+            icon: const Icon(Icons.download),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DownloadsScreen()),
+              );
+            },
+          ),
           IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()))),
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
           IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () async {
-                await AuthService().signOut();
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-              }),
+            icon: const Icon(Icons.logout),
+            onPressed: () => logout(context),
+          ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirestoreService().getBooks(),
+      body: StreamBuilder<List<Book>>(
+        stream: firestoreService.getBooks(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) return const Center(child: Text('Error loading books'));
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-          final books = snapshot.data!.docs.map((doc) => Book.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
-
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          final books = snapshot.data ?? [];
           return ListView.builder(
             itemCount: books.length,
             itemBuilder: (context, index) {
@@ -50,7 +92,14 @@ class HomeScreen extends StatelessWidget {
               return ListTile(
                 title: Text(book.title),
                 subtitle: Text(book.author),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookDetailsScreen(book: book))),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookDetailsScreen(book: book),
+                    ),
+                  );
+                },
               );
             },
           );

@@ -1,54 +1,83 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/book.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final AuthService _auth = AuthService();
+  final CollectionReference _booksCollection =
+      FirebaseFirestore.instance.collection('books');
+  final CollectionReference _usersCollection =
+      FirebaseFirestore.instance.collection('users');
 
-  Stream<QuerySnapshot> getBooks() {
-    return _db.collection('books').snapshots();
+  Stream<List<Book>> getBooks() {
+    return _booksCollection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Book.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
   }
 
-  Future<DocumentSnapshot> getBookById(String id) {
-    return _db.collection('books').doc(id).get();
-  }
-
-  Future<void> addFavorite(String bookId) {
-    final userId = _auth.getUserId();
-    return _db.collection('users').doc(userId).collection('favorites').add({'bookId': bookId});
-  }
-
-  Future<void> removeFavorite(String bookId) async {
-    final userId = _auth.getUserId();
-    final snapshot = await _db.collection('users').doc(userId).collection('favorites').where('bookId', isEqualTo: bookId).get();
-    for (var doc in snapshot.docs) {
-      await doc.reference.delete();
+  Future<void> toggleFavorite(String userId, String bookId, bool isFavorited) async {
+    DocumentReference userDoc = _usersCollection.doc(userId);
+    if (isFavorited) {
+      await userDoc.collection('favorites').doc(bookId).delete();
+    } else {
+      await userDoc.collection('favorites').doc(bookId).set({'bookId': bookId});
     }
   }
 
-  Future<bool> isFavorite(String bookId) async {
-    final userId = _auth.getUserId();
-    final snapshot = await _db.collection('users').doc(userId).collection('favorites').where('bookId', isEqualTo: bookId).get();
-    return snapshot.docs.isNotEmpty;
+  Stream<bool> isFavorited(String userId, String bookId) {
+    return _usersCollection
+        .doc(userId)
+        .collection('favorites')
+        .doc(bookId)
+        .snapshots()
+        .map((snapshot) => snapshot.exists);
   }
 
-  Stream<QuerySnapshot> getFavorites() {
-    final userId = _auth.getUserId();
-    return _db.collection('users').doc(userId).collection('favorites').snapshots();
+  Stream<List<Book>> getFavorites(String userId) {
+    return _usersCollection
+        .doc(userId)
+        .collection('favorites')
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Book> favorites = [];
+      for (var doc in snapshot.docs) {
+        DocumentSnapshot bookDoc = await _booksCollection.doc(doc['bookId']).get();
+        if (bookDoc.exists) {
+          favorites.add(Book.fromMap(bookDoc.data() as Map<String, dynamic>, doc.id));
+        }
+      }
+      return favorites;
+    });
   }
 
-  Future<void> addDownload(String bookId, String localPath) {
-    final userId = _auth.getUserId();
-    return _db.collection('users').doc(userId).collection('downloads').add({'bookId': bookId, 'localPath': localPath});
+  Future<void> addDownload(String userId, String bookId) async {
+    await _usersCollection.doc(userId).collection('downloads').doc(bookId).set({
+      'bookId': bookId,
+      'downloadedAt': FieldValue.serverTimestamp(),
+    });
   }
 
-  Future<void> removeDownload(String downloadId) {
-    final userId = _auth.getUserId();
-    return _db.collection('users').doc(userId).collection('downloads').doc(downloadId).delete();
+  Stream<List<Book>> getDownloads() {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    return _usersCollection
+        .doc(userId)
+        .collection('downloads')
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Book> downloads = [];
+      for (var doc in snapshot.docs) {
+        DocumentSnapshot bookDoc = await _booksCollection.doc(doc['bookId']).get();
+        if (bookDoc.exists) {
+          downloads.add(Book.fromMap(bookDoc.data() as Map<String, dynamic>, doc.id));
+        }
+      }
+      return downloads;
+    });
   }
 
-  Stream<QuerySnapshot> getDownloads() {
-    final userId = _auth.getUserId();
-    return _db.collection('users').doc(userId).collection('downloads').snapshots();
+  Future<void> removeDownload(String bookId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    await _usersCollection.doc(userId).collection('downloads').doc(bookId).delete();
   }
 }
