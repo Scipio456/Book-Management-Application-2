@@ -5,12 +5,18 @@ import 'firebase_options.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 
-// Import the firebase_options file to access DefaultFirebaseOptions
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    runApp(const MyApp());
+  } catch (e) {
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(child: Text('Firebase initialization failed: $e')),
+      ),
+    ));
+  }
 }
 
 class MyApp extends StatelessWidget {
