@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -56,8 +58,8 @@ class _WebPdfViewer extends StatelessWidget {
     web.document.getElementById('pdf-viewer')?.remove();
     final div = web.document.createElement('div') as web.HTMLDivElement;
     div.id = 'pdf-viewer';
-    div.innerHTML = html;
-    web.document.body.append(div);
+    div.innerHTML = html as JSAny;
+    web.document.body?.append(div);
 
     return const SizedBox.expand(); // Placeholder, as iframe is injected via JS
   }
