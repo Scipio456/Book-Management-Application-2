@@ -39,28 +39,60 @@ class PdfViewerScreen extends StatelessWidget {
   }
 }
 
-class _WebPdfViewer extends StatelessWidget {
+class _WebPdfViewer extends StatefulWidget {
   final String url;
 
   const _WebPdfViewer({required this.url});
 
   @override
-  Widget build(BuildContext context) {
-    // Use JavaScript to inject PDF.js viewer
-    final html = '''
-      <div style="height: 100%; width: 100%;">
-        <iframe
-          src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/web/viewer.html?file=$url"
-          style="width: 100%; height: 100%; border: none;"
-        ></iframe>
-      </div>
-    ''';
+  _WebPdfViewerState createState() => _WebPdfViewerState();
+}
+
+class _WebPdfViewerState extends State<_WebPdfViewer> {
+  @override
+  void initState() {
+    super.initState();
+    // Inject PDF.js viewer on widget initialization
+    _injectPdfViewer();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the injected div to prevent duplicates
     web.document.getElementById('pdf-viewer')?.remove();
+    super.dispose();
+  }
+
+  void _injectPdfViewer() {
+    // Remove existing viewer if present
+    web.document.getElementById('pdf-viewer')?.remove();
+    // Create container div
     final div = web.document.createElement('div') as web.HTMLDivElement;
     div.id = 'pdf-viewer';
-    div.innerHTML = html as JSAny;
+    div.style.width = '100%';
+    div.style.height = '100%';
+    // Inject iframe with PDF.js viewer
+    final html = '''
+      <iframe
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/web/viewer.html?file=${widget.url}"
+        style="width: 100%; height: 100%; border: none;"
+      ></iframe>
+    ''';
+    div.innerHTML = html as JSAny; // Use innerHTML property
     web.document.body?.append(div);
+  }
 
-    return const SizedBox.expand(); // Placeholder, as iframe is injected via JS
+  @override
+  void didUpdateWidget(_WebPdfViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-inject if URL changes
+    if (oldWidget.url != widget.url) {
+      _injectPdfViewer();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.expand(); // Placeholder for Flutter widget tree
   }
 }
