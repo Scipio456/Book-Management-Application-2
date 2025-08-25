@@ -1,97 +1,137 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:io' show File;
-import 'package:web/web.dart' as web;
+import 'package:provider/provider.dart';
 import '../models/book.dart';
 import '../services/firestore_service.dart';
-import 'pdf_viewer_screen.dart';
+import '../screens/pdf_viewer_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class BookDetailsScreen extends StatelessWidget {
   final Book book;
+
   const BookDetailsScreen({super.key, required this.book});
 
-  @override
-  Widget build(BuildContext context) {
-    final FirestoreService firestoreService = FirestoreService();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Future<void> _toggleFavorite(BuildContext context) async {
+    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
+    try {
+      await firestoreService.toggleFavorite(book.id, !book.isFavorite);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(book.isFavorite ? 'Removed from favorites' : 'Added to favorites'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating favorite: $e')),
+      );
+    }
+  }
 
-    Future<void> downloadAndView(BuildContext context) async {
-      try {
-        final ref = FirebaseStorage.instance.ref(book.pdfUrl);
-        final url = await ref.getDownloadURL();
-        String filePath = url; // Default to URL for web
-        if (kIsWeb) {
-          // For web, trigger browser download
-          web.HTMLAnchorElement()
-            ..href = url
-            ..setAttribute('download', '${book.title}.pdf')
-            ..click();
-        } else {
-          // For mobile, save to device
-          final response = await http.get(Uri.parse(url));
+  Future<void> _readNow(BuildContext context) async {
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerScreen(path: book.pdfUrl, title: book.title),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error opening PDF: $e')),
+      );
+    }
+  }
+
+  Future<void> _downloadAndViewPdf(BuildContext context) async {
+    try {
+      final url = book.pdfUrl; // Google Drive direct URL
+      if (kIsWeb) {
+        // On web, navigate directly to PdfViewerScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PdfViewerScreen(path: url, title: book.title),
+          ),
+        );
+      } else {
+        // On mobile, download to local storage
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
           final dir = await getApplicationDocumentsDirectory();
           final file = File('${dir.path}/${book.title}.pdf');
-          await file.writeAsBytes(response.bodyBytes);
-          filePath = file.path; // Use file path for mobile
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Downloaded to $filePath')),
-            );
-          }
-        }
-        // Track download in Firestore
-        await firestoreService.addDownload(userId, book.id);
-        // Navigate to PDF viewer
-        if (context.mounted) {
+          await file.write(response.bodyBytes);
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PdfViewerScreen(
-                path: filePath,
-                title: book.title,
-              ),
+              builder: (context) => PdfViewerScreen(path: file.path, title: book.title),
             ),
           );
-        }
-      } catch (e) {
-        if (context.mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Download failed: $e')),
+            SnackBar(content: Text('Failed to download PDF')),
           );
         }
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error downloading PDF: $e')),
+      );
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(book.title)),
+      appBar: AppBar(
+        title: Text(book.title),
+        actions: [
+          IconButton(
+            icon: Icon(
+              book.isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: book.isFavorite ? Colors.red : null,
+            ),
+            onPressed: () => _toggleFavorite(context),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Author: ${book.author}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
-            Text('Description: ${book.description}', style: const TextStyle(fontSize: 16)),
+            if (book.coverImage.isNotEmpty)
+              Center(
+                child: Image.network(
+                  book.coverImage,
+                  height: 200,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                ),
+              ),
             const SizedBox(height: 16),
-            StreamBuilder<bool>(
-              stream: firestoreService.isFavorited(userId, book.id),
-              builder: (context, snapshot) {
-                final isFavorited = snapshot.data ?? false;
-                return ElevatedButton(
-                  onPressed: () {
-                    firestoreService.toggleFavorite(userId, book.id, isFavorited);
-                  },
-                  child: Text(isFavorited ? 'Remove from Favorites' : 'Add to Favorites'),
-                );
-              },
+            Text(
+              book.title,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            ElevatedButton(
-              onPressed: () => downloadAndView(context),
-              child: const Text('Download & View PDF'),
+            Text(
+              'by ${book.author}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _readNow(context),
+                  child: const Text('Read Now'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () => _downloadAndViewPdf(context),
+                  child: const Text('Download & View PDF'),
+                ),
+              ],
             ),
           ],
         ),
